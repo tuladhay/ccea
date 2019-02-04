@@ -19,7 +19,7 @@ class CCEA:
         nn_input_size, nn_output_size, nn_hidden_size, lr: neural network initialization parameters
         agents              : agent with its own population of policies
         '''
-        self.population_size = params.population_size
+        self.population_size = params.population_size  # Note. After mutation, this isnt the same
         self.n_agents = params.n_agents
         self.mut_prob = params.mutation_rate
 
@@ -48,13 +48,11 @@ class CCEA:
     def reset_teambuilder(self):
         agent_lineup = []
         for n in range(self.n_agents):
-            agent_lineup.append(np.arange(self.population_size))
-            np.random.shuffle(agent_lineup[n])
+            agent_lineup.append(np.arange(len(self.agents[0].population)))
             agent_lineup[n] = np.repeat(agent_lineup[n], self.leniency_evals)
-
+            np.random.shuffle(agent_lineup[n])
         self.random_team_list = agent_lineup
-        # repeat the list n times, n = rounds for leniency
-        # agent_lineup = agent_lineup*self.leniency_evals
+        # this is good. arrays are reshuffled within themselves
 
     def make_team(self):
         '''
@@ -64,10 +62,10 @@ class CCEA:
         team = []
         for i, a in enumerate(self.random_team_list):
             index = a[0]    # grab the index for policy to use
-            self.random_team_list[i] = np.delete(a, 0)
+            self.random_team_list[i] = np.delete(a, 0)      # update the list by popping
             team.append(self.agents[i].population[index])
-
         self.team = team
+        # this is good
 
     def get_team_action(self, joint_observation):
         joint_action = []
@@ -75,17 +73,20 @@ class CCEA:
         torch_obs = [Variable(torch.Tensor(joint_observation[i]).view(1, -1),
                             requires_grad=False)
                             for i in range(self.n_agents)]
-
         for pol, obs in zip(self.team, torch_obs):
             joint_action.append(pol.forward(obs))
         self.joint_action = joint_action
 
     def assign_fitness(self, team_fitness):
         for policy in self.team:
-            policy.fitness = team_fitness
+            # To take max(...) for leniency evaluation
+            if team_fitness > policy.fitness:
+                policy.fitness = team_fitness
 
     def mutate(self):
-        ''' For each agent, create 2*population by mutation '''
+        ''' For each agent, create 2*population by mutation.
+        NOTE: self.population_size doesn't currently reflect this increase
+        '''
 
         def regularize_weight(weight, mag):
             if weight > mag: weight = mag
@@ -151,7 +152,7 @@ class CCEA:
         self.best_team = []
         for agent in self.agents:
             agent.population.sort(key=lambda x: x.fitness, reverse=True)  # FIX THIS
-            agent.population = agent.population[:self.population_size]
+            agent.population = agent.population[:self.population_size]  # select K best
             agent.best_policy = agent.population[0]
             self.best_team.append(agent.best_policy)
 
