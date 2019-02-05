@@ -6,14 +6,15 @@ from networks import MLPNetwork
 class NeuralNetworkAgent:
     ''' Agent is not a single agent. It is a population of policies '''
     def __init__(self, name, nn_input_size, nn_output_size, nn_hidden_size,
-                 population_size):
+                 population_size,
+                 ):
         self.name = name
-        self.state = []
-        self.comm = []
-        self.action = []
+        self.state = []     # Being used somewhere?
+        self.comm = []      # Being used somewhere?
+        self.action = []    # Being used somewhere?
         self.population = [MLPNetwork(nn_input_size, nn_output_size,
-                            nn_hidden_size)
-                            for _ in range(population_size)]
+                           nn_hidden_size)
+                           for _ in range(population_size)]
         self.best_policy = None
         self.initialize_fitness()
 

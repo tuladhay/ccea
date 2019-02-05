@@ -1,18 +1,23 @@
 import torch.nn as nn
 import torch.nn.functional as F
 
+
 class MLPNetwork(nn.Module):
     """
     MLP network (can be used as value or policy)
     """
-    def __init__(self, input_dim, out_dim, hidden_dim=64, nonlin=F.relu,
-                 constrain_out=False, norm_in=False, discrete_action=False):
+    def __init__(self, input_dim, out_dim, hidden_dim,
+                 nonlin=F.relu,
+                 constrain_out=False,
+                 norm_in=False,
+                 discrete_action=False):
         """
         Inputs:
             input_dim (int): Number of dimensions in input
             out_dim (int): Number of dimensions in output
             hidden_dim (int): Number of hidden dimensions
-            nonlin (PyTorch function): Nonlinearity to apply to hidden layers
+            comm_action (bool): Agent has communication action
+            nonlin (PyTorch function): Non-linearity to apply to hidden layers
         """
         super(MLPNetwork, self).__init__()
 
@@ -22,6 +27,7 @@ class MLPNetwork(nn.Module):
             self.in_fn.bias.data.fill_(0)
         else:
             self.in_fn = lambda x: x
+
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc2 = nn.Linear(hidden_dim, hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, out_dim)
@@ -33,7 +39,7 @@ class MLPNetwork(nn.Module):
         else:  # logits for discrete action (will softmax later)
             self.out_fn = lambda x: x
 
-        # Fitness when using evolutionary algorithm
+        # Initialize fitness for Evolutionary Algorithm
         self.fitness = 0
 
     def forward(self, X):
@@ -46,4 +52,5 @@ class MLPNetwork(nn.Module):
         h1 = self.nonlin(self.fc1(self.in_fn(X)))
         h2 = self.nonlin(self.fc2(h1))
         out = self.out_fn(self.fc3(h2))
+        # out.data[0][2:] = 1
         return out
