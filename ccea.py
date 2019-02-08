@@ -19,7 +19,7 @@ class CCEA:
         nn_input_size, nn_output_size, nn_hidden_size, lr: neural network initialization parameters
         agents              : agent with its own population of policies
         '''
-        self.population_size = params.population_size  # Note. After mutation, this isnt the same
+        self.population_size = params.population_size  # Note. After mutation, this isn't the same
         self.n_agents = params.n_agents
         self.mut_prob = params.mutation_rate
 
@@ -27,11 +27,13 @@ class CCEA:
         self.nn_input_size = params.nn_input_size
         self.nn_output_size = params.nn_output_size
         self.nn_hidden_size = params.nn_hidden_size
+
         self.agents = [Agent(i,
                              self.nn_input_size,
                              self.nn_output_size,
                              self.nn_hidden_size,
-                             self.population_size) for i in range(self.n_agents)]
+                             self.population_size
+                             ) for i in range(self.n_agents)]
         self.team = []
         self.best_team = []
         self.random_team_list = []
