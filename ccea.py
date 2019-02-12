@@ -160,7 +160,7 @@ class CCEA:
 
     def save(self, filename):
         """
-        Save trained parameters of all agents into one file
+        Save trained pgitarameters of all agents into one file
         """
         save_dict = {'init_dict': self.init_dict,
                      'agent_params': [a.get_params() for a in self.agents]}
