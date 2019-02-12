@@ -42,7 +42,7 @@ if __name__=="__main__":
         env.reset()
         global_traj_reward = None
         while not env.done:
-            joint_action = [np.random.rand(2) for _ in range(env.args.num_agents)]
+            joint_action = [np.random.uniform(-1,1,2) for _ in range(env.args.num_agents)]
             _, _, _, global_traj_reward = env.step(joint_action)
             # print(global_traj_reward)
             # print(env.done)

@@ -1,0 +1,3 @@
+- master branch is for the "develop" branch of rover-domain. This is the Golden's original.
+- communication branch is for the "tuladhay" branch of rover-domain, where communication is introduced
+- py_shaw_implement branch is for the "python-shaw" branch of the rover-domain
