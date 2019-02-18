@@ -40,6 +40,7 @@ class MLPNetwork(nn.Module):
             self.out_fn = lambda x: x
 
         # Initialize fitness for Evolutionary Algorithm
+        self.fitness_list = []
         self.fitness = 0
 
     def forward(self, X):

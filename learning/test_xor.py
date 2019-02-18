@@ -1,13 +1,7 @@
-# from envs.rover_domain.env_wrapper import RoverDomainPython
-from envs.rover_domain.rover_domain_python import RoverDomain
 from ccea import CCEA
 import numpy as np
-from tensorboardX import SummaryWriter
-import time
-from pathlib import Path
-import os
-import csv
 import copy
+from xor import XOR
 
 class Params:
     def __init__(self):
@@ -38,48 +32,19 @@ class Params:
         self.nn_hidden_size = 16
 
 
-def get_env_setting():
-    setting = {"n_agents" : params.num_agents,
-               "n_pois": params.num_poi,
-               "coupling": params.coupling,
-               "n_steps": params.ep_len,
-               "setup_size": params.dim_x,
-               "act_dist": params.act_dist,
-               "obs_radius": params.obs_radius,
-               "sensor_model": params.sensor_model,
-               "angle_res": params.angle_res,
-               "poi_rand": params.poi_rand,
-                "timestr": timestr
-                }
-    return setting
-
-
 if __name__=="__main__":
     params = Params()
     # initialize the environment
-    env = RoverDomain(params)
-    joint_obs = env.reset()
+    env = XOR()
+    obs = env._get_obs()
 
     # Initialize params for CCEA
-
-    params.nn_input_size = len(joint_obs[0])
-    params.nn_output_size = 2  # set this automatically
+    params.nn_input_size = 2
+    params.nn_output_size = 1  # set this automatically
 
     # -----------------------------------------------------------------------------------------------------------------#
     # Logger and save experiment setting
     # -----------------------------------------------------------------------------------------------------------------#
-    timestr = time.strftime("__%m%d-%H%M%S")
-    file_path = Path('./Experiments') / ("R"+str(params.num_agents) + "-P"+str(params.num_poi) + "-Cp"+str(params.coupling) + timestr)
-    os.makedirs(file_path)
-
-    # save setting
-    setting = get_env_setting()
-    with open(str(file_path) +'/settings.csv', 'w') as csv_file:
-        writer = csv.writer(csv_file)
-        for key, value in setting.items():
-            writer.writerow([key, value])
-
-    logger = SummaryWriter(str(file_path))
 
     # -----------------------------------------------------------------------------------------------------------------#
     # Run Algorithm
@@ -89,7 +54,7 @@ if __name__=="__main__":
     ccea = CCEA(params)
     test_team_runs = 10      # eval runs for best_team
 
-    episodes = 10000
+    episodes = 1000
     for ep_i in range(episodes):
         # Makes population of 2*K policies for M agents
         ccea.mutate()
@@ -104,23 +69,28 @@ if __name__=="__main__":
 
             done = False
             # --- Run entire trajectory using this team policy --- #
+            reward = 0.0
             while not done:
                 # List of observations for list of agents
-                joint_obs = np.array(env.get_joint_state())
-
+                obs = env.current_state
+                obs = [np.array(obs)]
                 # List of actions for a list of agents. Actions stored in ccea.joint_action
-                ccea.get_team_action(joint_obs)
+                ccea.get_team_action(obs)
                 agent_actions = np.array([np.double(ac.data[0]) for ac in ccea.joint_action])
-
+                agent_actions = int(agent_actions)
                 # Step
-                _, _, done, _ = env.step(agent_actions)  # obs, step_rewards, done, self
+                _, reward, done = env.step(agent_actions)  # obs, step_rewards, done, self
 
             # Reward after running entire trajectory
-            global_traj_reward = env.get_global_traj_reward()
             #fitness = env.rover_rewards[0]      # All agents have same global reward.
-            ccea.assign_fitness(global_traj_reward)        # Uses max(...) for Leniency
+            ccea.assign_fitness(reward)        # Appends
 
         # selection. Back to K policies for M agents. Also makes a best_policy team
+        for a in ccea.agents:
+            for pol in a.population:
+                pol.fitness = np.mean(pol.fitness_list)
+                pol.fitness_list = []
+
         ccea.selection()
 
         # ------------------------------------------------------------------------------------------------------------#
@@ -131,24 +101,18 @@ if __name__=="__main__":
         for _ in range(test_team_runs):
             env.reset()
             done = False
+            reward = None
             while not done:
-                joint_obs = np.array(env.get_joint_state())
-                #joint_obs = [env.rover_observations.base[i].flatten() for i in range(params.n_agents)]
-                ccea.get_team_action(joint_obs)
+                obs = np.array(env.current_state)
+                obs = [np.array(obs)]
+                ccea.get_team_action(obs)
                 agent_actions = np.array([np.double(ac.data[0]) for ac in ccea.joint_action])
-                _, _, done, _ = env.step(agent_actions)  # obs, step_rewards, done, self
+                agent_actions = int(agent_actions)
+                _, reward, done = env.step(agent_actions)  # obs, step_rewards, done, self
 
-            global_traj_reward = env.get_global_traj_reward()
-            fitness.append(global_traj_reward)  # All agents have same global reward.
+            fitness.append(reward)  # All agents have same global reward.
         fitness = np.mean(fitness)      # averaging over eval runs
         # Logging
-        logger.add_scalar('mean_team_fitness', fitness, ep_i)
-
-        # Save model
-        if not ep_i % 100:
-            os.makedirs(file_path / 'models', exist_ok=True)
-            ccea.save(file_path / 'models' / ('model_ep%i.pt' % (ep_i)))
 
         # Print Episode and fitness
         print("Episode:"+str(ep_i) + "  Fitness:" + str(fitness))
-

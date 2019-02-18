@@ -20,8 +20,8 @@ class CCEA:
         agents              : agent with its own population of policies
         '''
         self.population_size = params.population_size  # Note. After mutation, this isn't the same
-        self.n_agents = params.n_agents
-        self.mut_prob = params.mutation_rate
+        self.n_agents = params.num_agents
+        self.mut_prob = params.mutation_rate  #useless
 
         # For Neural Network Policies
         self.nn_input_size = params.nn_input_size
@@ -82,8 +82,9 @@ class CCEA:
     def assign_fitness(self, team_fitness):
         for policy in self.team:
             # To take max(...) for leniency evaluation
-            if team_fitness > policy.fitness:
-                policy.fitness = team_fitness
+            #if team_fitness > policy.fitness:
+            #    policy.fitness = team_fitness
+            policy.fitness_list.append(team_fitness)
 
     def mutate(self):
         ''' For each agent, create 2*population by mutation.
@@ -147,7 +148,12 @@ class CCEA:
                 mutate_inplace(offspring)
                 mutated_population.append(offspring)
             # add the mutated population to make 2*K population of M agents
+
+            for pol in mutated_population:
+                pol.fitness = 0.0
+
             agent.population += mutated_population
+            #Todo: should fitness = 0 for mutated?
 
     def selection(self):
         # Select the best K policies in the team. Saves best policies in a team.
