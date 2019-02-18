@@ -23,6 +23,10 @@ class CCEA:
         self.n_agents = params.num_agents
         self.mut_prob = params.mutation_rate
 
+        # Communication
+        self.comm = params.communication
+        self.n_comm_bits = params.n_comm_bits
+
         # For Neural Network Policies
         self.nn_input_size = params.nn_input_size
         self.nn_output_size = params.nn_output_size

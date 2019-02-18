@@ -8,24 +8,27 @@ import os
 import csv
 import copy
 
+
 class Params:
     def __init__(self):
         # Environment parameters
         self.dim_x = 15         # world size
         self.dim_y = self.dim_x
-        self.obs_radius = 25   # observability
+        self.obs_radius = 125   # observability
         self.act_dist = 5       # how far the rovers needs to be to activate a POI
         self.angle_res = 90     # angle resolution
 
         self.num_poi = 5       # number of POIs
         self.num_agents = 5    # number of agents
-        self.ep_len = 100       # episode length
+        self.ep_len = 50       # episode length
         self.poi_rand = True    # initialize POI randomly?
-        self.coupling = 5       # Coupling
+        self.coupling = 3       # Coupling
         self.rover_speed = 1    # default is 1
         self.sensor_model = 'density'   # 'closest', 'density'
 
-        self.action_dim = 2     # two physical actions
+        self.communication = True
+        self.n_comm_bits = int(360/self.angle_res)
+        self.action_dim = 2 + self.n_comm_bits     # two physical actions + quadrants
 
         # CCEA parameters
         self.population_size = 15
@@ -33,12 +36,14 @@ class Params:
 
         # For Neural Network Policies
         self.nn_input_size = None
-        self.nn_output_size = None
+        self.nn_output_size = self.action_dim
         self.nn_hidden_size = 16
 
 
 def get_env_setting():
-    setting = {"n_agents" : params.num_agents,
+    setting = {"communication": params.communication,
+               "n_comm_bits": params.n_comm_bits,
+               "n_agents" : params.num_agents,
                "n_pois": params.num_poi,
                "coupling": params.coupling,
                "n_steps": params.ep_len,
@@ -67,8 +72,8 @@ if __name__=="__main__":
 
     # Initialize params for CCEA
 
-    params.nn_input_size = len(joint_obs[0])
-    params.nn_output_size = 2  # set this automatically
+    params.nn_input_size = len(joint_obs[0])  # todo: fix this
+    params.nn_output_size = params.action_dim  # set this automatically
 
     # -----------------------------------------------------------------------------------------------------------------#
     # Logger and save experiment setting
@@ -111,6 +116,7 @@ if __name__=="__main__":
             # --- Run entire trajectory using this team policy --- #
             while not done:
                 # List of observations for list of agents
+                #joint_obs = np.array(env.get_joint_state())
                 joint_obs = np.array(env.get_joint_state())
 
                 # List of actions for a list of agents. Actions stored in ccea.joint_action
@@ -122,9 +128,10 @@ if __name__=="__main__":
 
             # Reward after running entire trajectory
             global_traj_reward = env.get_global_traj_reward()
-            #fitness = env.rover_rewards[0]      # All agents have same global reward.
-            ccea.assign_fitness(global_traj_reward)        # Uses max(...) for Leniency
 
+            ccea.assign_fitness(global_traj_reward)        # Appends to fitness_list
+
+        # Average the fitness_list
         for a in ccea.agents:
             for pol in a.population:
                 pol.fitness = np.mean(pol.fitness_list)
@@ -157,6 +164,7 @@ if __name__=="__main__":
         if not ep_i % 100:
             os.makedirs(file_path / 'models', exist_ok=True)
             ccea.save(file_path / 'models' / ('model_ep%i.pt' % (ep_i)))
+            print("Experiment Filepath = " + str(file_path))
 
         # Print Episode and fitness
         print("Episode:"+str(ep_i) + "  Fitness:" + str(fitness))
