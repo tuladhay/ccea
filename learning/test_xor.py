@@ -3,6 +3,7 @@ import numpy as np
 import copy
 from xor import XOR
 
+
 class Params:
     def __init__(self):
         # Environment parameters

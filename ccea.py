@@ -21,7 +21,7 @@ class CCEA:
         '''
         self.population_size = params.population_size  # Note. After mutation, this isn't the same
         self.n_agents = params.num_agents
-        self.mut_prob = params.mutation_rate  #useless
+        self.mut_prob = params.mutation_rate
 
         # For Neural Network Policies
         self.nn_input_size = params.nn_input_size
@@ -105,7 +105,7 @@ class CCEA:
             mut_strength = 0.1
             num_mutation_frac = 0.1
             super_mut_strength = 10
-            super_mut_prob = 0.05
+            super_mut_prob = self.mut_prob  # was 0.05
             reset_prob = super_mut_prob + 0.05
 
             num_params = len(list(gene.parameters()))

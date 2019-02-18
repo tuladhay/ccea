@@ -1,4 +1,3 @@
-# from envs.rover_domain.env_wrapper import RoverDomainPython
 from envs.rover_domain.rover_domain_python import RoverDomain
 from ccea import CCEA
 import numpy as np
@@ -12,25 +11,25 @@ import copy
 class Params:
     def __init__(self):
         # Environment parameters
-        self.dim_x = 20         # world size
+        self.dim_x = 15         # world size
         self.dim_y = self.dim_x
-        self.obs_radius = 10    # observability
+        self.obs_radius = 25   # observability
         self.act_dist = 5       # how far the rovers needs to be to activate a POI
         self.angle_res = 90     # angle resolution
 
-        self.num_poi = 1       # number of POIs
-        self.num_agents = 1    # number of agents
-        self.ep_len = 50       # episode length
+        self.num_poi = 5       # number of POIs
+        self.num_agents = 5    # number of agents
+        self.ep_len = 100       # episode length
         self.poi_rand = True    # initialize POI randomly?
-        self.coupling = 1       # Coupling
+        self.coupling = 5       # Coupling
         self.rover_speed = 1    # default is 1
-        self.sensor_model = 'closest'   # 'closest', 'density'
+        self.sensor_model = 'density'   # 'closest', 'density'
 
         self.action_dim = 2     # two physical actions
 
         # CCEA parameters
-        self.population_size = 20
-        self.mutation_rate = 0.01
+        self.population_size = 15
+        self.mutation_rate = 0.05
 
         # For Neural Network Policies
         self.nn_input_size = None
@@ -49,7 +48,13 @@ def get_env_setting():
                "sensor_model": params.sensor_model,
                "angle_res": params.angle_res,
                "poi_rand": params.poi_rand,
-                "timestr": timestr
+               "episode_length" : params.ep_len,
+               "rover_speed": params.rover_speed,
+               "action_dim": params.act_dist,
+               "population_size": params.population_size,
+               "mutation_rate": params.mutation_rate,
+                "timestr": timestr,
+               "NN_hidden_size": params.nn_hidden_size
                 }
     return setting
 
@@ -120,6 +125,10 @@ if __name__=="__main__":
             #fitness = env.rover_rewards[0]      # All agents have same global reward.
             ccea.assign_fitness(global_traj_reward)        # Uses max(...) for Leniency
 
+        for a in ccea.agents:
+            for pol in a.population:
+                pol.fitness = np.mean(pol.fitness_list)
+                pol.fitness_list = []
         # selection. Back to K policies for M agents. Also makes a best_policy team
         ccea.selection()
 
@@ -133,7 +142,6 @@ if __name__=="__main__":
             done = False
             while not done:
                 joint_obs = np.array(env.get_joint_state())
-                #joint_obs = [env.rover_observations.base[i].flatten() for i in range(params.n_agents)]
                 ccea.get_team_action(joint_obs)
                 agent_actions = np.array([np.double(ac.data[0]) for ac in ccea.joint_action])
                 _, _, done, _ = env.step(agent_actions)  # obs, step_rewards, done, self
@@ -141,6 +149,7 @@ if __name__=="__main__":
             global_traj_reward = env.get_global_traj_reward()
             fitness.append(global_traj_reward)  # All agents have same global reward.
         fitness = np.mean(fitness)      # averaging over eval runs
+
         # Logging
         logger.add_scalar('mean_team_fitness', fitness, ep_i)
 
@@ -151,4 +160,3 @@ if __name__=="__main__":
 
         # Print Episode and fitness
         print("Episode:"+str(ep_i) + "  Fitness:" + str(fitness))
-
