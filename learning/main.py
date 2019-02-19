@@ -22,7 +22,7 @@ class Params:
         self.num_agents = 5    # number of agents
         self.ep_len = 50       # episode length
         self.poi_rand = True    # initialize POI randomly?
-        self.coupling = 3       # Coupling
+        self.coupling = 5       # Coupling
         self.rover_speed = 1    # default is 1
         self.sensor_model = 'density'   # 'closest', 'density'
 
@@ -113,6 +113,7 @@ if __name__=="__main__":
             ccea.make_team()
 
             done = False
+
             # --- Run entire trajectory using this team policy --- #
             while not done:
                 # List of observations for list of agents
@@ -128,9 +129,10 @@ if __name__=="__main__":
 
             # Reward after running entire trajectory
             global_traj_reward = env.get_global_traj_reward()
-
             ccea.assign_fitness(global_traj_reward)        # Appends to fitness_list
 
+            #print(env.comm_state)       # TODO: DEBUGGING
+            #print()
         # Average the fitness_list
         for a in ccea.agents:
             for pol in a.population:

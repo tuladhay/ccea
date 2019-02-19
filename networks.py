@@ -37,7 +37,7 @@ class MLPNetwork(nn.Module):
             self.fc3.weight.data.uniform_(-3e-3, 3e-3)
             self.out_fn = F.tanh
         else:  # logits for discrete action (will softmax later)
-            self.out_fn = lambda x: x
+            self.out_fn = F.tanh#lambda x: x
 
         # Initialize fitness for Evolutionary Algorithm
         self.fitness_list = []
@@ -54,4 +54,4 @@ class MLPNetwork(nn.Module):
         h2 = self.nonlin(self.fc2(h1))
         out = self.out_fn(self.fc3(h2))
         # out.data[0][2:] = 1
-        return out
+        return out  # Now output is bounded by [-1,1] due to tanh non-linearity
