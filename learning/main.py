@@ -18,17 +18,18 @@ class Params:
         self.act_dist = 5       # how far the rovers needs to be to activate a POI
         self.angle_res = 90     # angle resolution
 
-        self.num_poi = 5       # number of POIs
+        self.num_poi = 10       # number of POIs
         self.num_agents = 5    # number of agents
         self.ep_len = 50       # episode length
         self.poi_rand = True    # initialize POI randomly?
-        self.coupling = 5       # Coupling
+        self.coupling = 4       # Coupling
         self.rover_speed = 1    # default is 1
         self.sensor_model = 'density'   # 'closest', 'density'
 
-        self.communication = True
-        self.n_comm_bits = int(360/self.angle_res)
-        self.action_dim = 2 + self.n_comm_bits     # two physical actions + quadrants
+        self.communication = False
+        self.n_comm_bits = int(360/self.angle_res)*self.communication
+        self.action_dim = 2 + self.communication*self.n_comm_bits     # two physical actions + quadrants
+        self.comm_one_hot = True  # ONE-HOT VS SOFTMAX
 
         # CCEA parameters
         self.population_size = 15
@@ -42,6 +43,7 @@ class Params:
 
 def get_env_setting():
     setting = {"communication": params.communication,
+               "comm_one_hot": params.comm_one_hot,
                "n_comm_bits": params.n_comm_bits,
                "n_agents" : params.num_agents,
                "n_pois": params.num_poi,
@@ -73,7 +75,7 @@ if __name__=="__main__":
     # Initialize params for CCEA
 
     params.nn_input_size = len(joint_obs[0])  # todo: fix this
-    params.nn_output_size = params.action_dim  # set this automatically
+    params.nn_output_size = params.action_dim
 
     # -----------------------------------------------------------------------------------------------------------------#
     # Logger and save experiment setting
@@ -117,7 +119,6 @@ if __name__=="__main__":
             # --- Run entire trajectory using this team policy --- #
             while not done:
                 # List of observations for list of agents
-                #joint_obs = np.array(env.get_joint_state())
                 joint_obs = np.array(env.get_joint_state())
 
                 # List of actions for a list of agents. Actions stored in ccea.joint_action
@@ -131,8 +132,6 @@ if __name__=="__main__":
             global_traj_reward = env.get_global_traj_reward()
             ccea.assign_fitness(global_traj_reward)        # Appends to fitness_list
 
-            #print(env.comm_state)       # TODO: DEBUGGING
-            #print()
         # Average the fitness_list
         for a in ccea.agents:
             for pol in a.population:
