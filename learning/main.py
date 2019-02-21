@@ -14,25 +14,25 @@ class Params:
         # Environment parameters
         self.dim_x = 15         # world size
         self.dim_y = self.dim_x
-        self.obs_radius = 125   # observability
+        self.obs_radius = 5   # observability
         self.act_dist = 5       # how far the rovers needs to be to activate a POI
         self.angle_res = 90     # angle resolution
 
         self.num_poi = 10       # number of POIs
-        self.num_agents = 5    # number of agents
+        self.num_agents = 6    # number of agents
         self.ep_len = 50       # episode length
-        self.poi_rand = True    # initialize POI randomly?
-        self.coupling = 4       # Coupling
+        self.poi_rand = True   # initialize POI randomly
+        self.coupling = 5       # Coupling
         self.rover_speed = 1    # default is 1
-        self.sensor_model = 'density'   # 'closest', 'density'
+        self.sensor_model = 'closest'   # 'closest', 'density'
 
-        self.communication = False
+        self.communication = True
         self.n_comm_bits = int(360/self.angle_res)*self.communication
         self.action_dim = 2 + self.communication*self.n_comm_bits     # two physical actions + quadrants
         self.comm_one_hot = True  # ONE-HOT VS SOFTMAX
 
         # CCEA parameters
-        self.population_size = 15
+        self.population_size = 10
         self.mutation_rate = 0.05
 
         # For Neural Network Policies
@@ -145,6 +145,7 @@ if __name__=="__main__":
         # ------------------------------------------------------------------------------------------------------------#
         ccea.team = copy.deepcopy(ccea.best_team)
         fitness = []        # assuming fitness is always positive
+        flag_once = True    # For rendering once
         for _ in range(test_team_runs):
             env.reset()
             done = False
@@ -156,6 +157,9 @@ if __name__=="__main__":
 
             global_traj_reward = env.get_global_traj_reward()
             fitness.append(global_traj_reward)  # All agents have same global reward.
+            if flag_once:
+                env.render()
+                flag_once = False
         fitness = np.mean(fitness)      # averaging over eval runs
 
         # Logging
