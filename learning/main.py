@@ -14,19 +14,19 @@ class Params:
         # Environment parameters
         self.dim_x = 15         # world size
         self.dim_y = self.dim_x
-        self.obs_radius = 5   # observability
+        self.obs_radius = 125   # observability
         self.act_dist = 5       # how far the rovers needs to be to activate a POI
         self.angle_res = 90     # angle resolution
 
-        self.num_poi = 10       # number of POIs
-        self.num_agents = 6    # number of agents
+        self.num_poi = 5       # number of POIs
+        self.num_agents = 5    # number of agents
         self.ep_len = 50       # episode length
         self.poi_rand = True   # initialize POI randomly
-        self.coupling = 5       # Coupling
+        self.coupling = 3       # Coupling
         self.rover_speed = 1    # default is 1
-        self.sensor_model = 'closest'   # 'closest', 'density'
+        self.sensor_model = 'density'   # 'closest', 'density'
 
-        self.communication = True
+        self.communication = False
         self.n_comm_bits = int(360/self.angle_res)*self.communication
         self.action_dim = 2 + self.communication*self.n_comm_bits     # two physical actions + quadrants
         self.comm_one_hot = True  # ONE-HOT VS SOFTMAX
@@ -99,7 +99,7 @@ if __name__=="__main__":
 
     # Initialize algorithm
     ccea = CCEA(params)
-    test_team_runs = 10      # eval runs for best_team
+    test_team_runs = 5      # eval runs for best_team
 
     episodes = 10000
     for ep_i in range(episodes):
